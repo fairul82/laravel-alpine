@@ -14,7 +14,7 @@
     <div class="flex-1 grid grid-cols-4 gap-10">
         <template x-for="card in cards">
             <div>
-                <button x-show="! card.cleard"
+                <button x-show="! card.cleared"
                         :style="'background:'+ (card.flipped ? card.color : '#999')"
                         class="w-full h-32 cursor-pointer"
                         @click="flipCard(card)">
@@ -24,7 +24,20 @@
         </template>
     </div>
 </div>
+<div x-data="{show:false , message: 'Default Message'}"
+     x-show="show"
+     x-text="message"
+     @flash.window="message= $event.detail.message; show:true;"
+     class="fixed bottom-0 right-0 bg-green-500 text-white p-2 mb-4">
+
+</div>
 <script>
+    function flash(message) {
+        window.dispatchEvent(new CustomEvent('flash', {
+            detail: {message}
+        }));
+    }
+
     function game() {
         return {
             cards: [
@@ -40,6 +53,9 @@
             get clearedCards() {
                 return this.cards.filter(card => card.cleared);
             },
+            get remainingCards() {
+                return this.cards.filter(card => !card.cleared);
+            },
             get points() {
                 return this.clearedCards.length;
             },
@@ -48,20 +64,22 @@
             },
             flipCard(card) {
                 card.flipped = !card.flipped;
-                if (this.flippedCards.length == 2) {
+                if (this.flippedCards.length === 2) {
                     if (this.hasMatch()) {
+                        flash('You found a match');
                         this.flippedCards.forEach(card => card.cleared = true);
 
                         //is the game over?
-                        if (this.clearedCards.length === this.cards.length) {
+                        //if there is no remaining cards
+                        if (!this.remainingCards.length) {
                             alert('you won!');
                         }
-                        this.flippedCards.forEach(card => card.flipped = false);
                     }
+                    this.flippedCards.forEach(card => card.flipped = false);
+
                 }
             },
             hasMatch() {
-
                 return this.flippedCards[0]['color'] === this.flippedCards[1]['color'];
 
             }
